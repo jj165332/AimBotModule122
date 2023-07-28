@@ -114,8 +114,6 @@ local function Load()
     -- ...
 end
 
--- ...
-
 
 	ServiceConnections.RenderSteppedConnection = RunService.RenderStepped:Connect(function()
 		if Environment.FOVSettings.Enabled and Environment.Settings.Enabled then
