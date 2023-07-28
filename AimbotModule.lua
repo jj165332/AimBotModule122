@@ -41,6 +41,7 @@ getgenv().AirHub.Aimbot = {
 		TriggerKey = "MouseButton2",
 		Toggle = false,
 		LockPart = "Head" -- Body part to lock on
+		BrightBlueEnemyOnly = true
 	},
 
 	FOVSettings = {
@@ -63,45 +64,58 @@ local Environment = getgenv().AirHub.Aimbot
 --// Core Functions
 
 local function ConvertVector(Vector)
-	return Vector2new(Vector.X, Vector.Y)
+    return Vector2new(Vector.X, Vector.Y)
 end
 
 local function CancelLock()
-	Environment.Locked = nil
-	Environment.FOVCircle.Color = Environment.FOVSettings.Color
-	UserInputService.MouseDeltaSensitivity = OriginalSensitivity
+    Environment.Locked = nil
+    Environment.FOVCircle.Color = Environment.FOVSettings.Color
+    UserInputService.MouseDeltaSensitivity = OriginalSensitivity
 
-	if Animation then
-		Animation:Cancel()
-	end
+    if Animation then
+        Animation:Cancel()
+    end
 end
 
 local function GetClosestPlayer()
-	if not Environment.Locked then
-		RequiredDistance = (Environment.FOVSettings.Enabled and Environment.FOVSettings.Amount or 2000)
+    if not Environment.Locked then
+        RequiredDistance = (Environment.FOVSettings.Enabled and Environment.FOVSettings.Amount or 2000)
 
-		for _, v in next, Players:GetPlayers() do
-			if v ~= LocalPlayer and v.Character and v.Character:FindFirstChild(Environment.Settings.LockPart) and v.Character:FindFirstChildOfClass("Humanoid") then
-				if Environment.Settings.TeamCheck and v.TeamColor == LocalPlayer.TeamColor then continue end
-				if Environment.Settings.AliveCheck and v.Character:FindFirstChildOfClass("Humanoid").Health <= 0 then continue end
-				if Environment.Settings.WallCheck and #(Camera:GetPartsObscuringTarget({v.Character[Environment.Settings.LockPart].Position}, v.Character:GetDescendants())) > 0 then continue end
+        for _, v in next, Players:GetPlayers() do
+            if v ~= LocalPlayer and v.Character and v.Character:FindFirstChild(Environment.Settings.LockPart) and v.Character:FindFirstChildOfClass("Humanoid") then
+                if Environment.Settings.TeamCheck and v.TeamColor == LocalPlayer.TeamColor then
+                    if Environment.Settings.BrightBlueEnemyOnly and v.TeamColor ~= BrickColor.new("Bright blue") then
+                        continue
+                    end
+                end
 
-				local Vector, OnScreen = Camera:WorldToViewportPoint(v.Character[Environment.Settings.LockPart].Position); Vector = ConvertVector(Vector)
-				local Distance = (UserInputService:GetMouseLocation() - Vector).Magnitude
+                if Environment.Settings.AliveCheck and v.Character:FindFirstChildOfClass("Humanoid").Health <= 0 then continue end
+                if Environment.Settings.WallCheck and #(Camera:GetPartsObscuringTarget({v.Character[Environment.Settings.LockPart].Position}, v.Character:GetDescendants())) > 0 then continue end
 
-				if Distance < RequiredDistance and OnScreen then
-					RequiredDistance = Distance
-					Environment.Locked = v
-				end
-			end
-		end
-	elseif (UserInputService:GetMouseLocation() - ConvertVector(Camera:WorldToViewportPoint(Environment.Locked.Character[Environment.Settings.LockPart].Position))).Magnitude > RequiredDistance then
-		CancelLock()
-	end
+                local Vector, OnScreen = Camera:WorldToViewportPoint(v.Character[Environment.Settings.LockPart].Position); Vector = ConvertVector(Vector)
+                local Distance = (UserInputService:GetMouseLocation() - Vector).Magnitude
+
+                if Distance < RequiredDistance and OnScreen then
+                    RequiredDistance = Distance
+                    Environment.Locked = v
+                end
+            end
+        end
+    elseif (UserInputService:GetMouseLocation() - ConvertVector(Camera:WorldToViewportPoint(Environment.Locked.Character[Environment.Settings.LockPart].Position))).Magnitude > RequiredDistance then
+        CancelLock()
+    end
 end
 
+-- ...
+
 local function Load()
-	OriginalSensitivity = UserInputService.MouseDeltaSensitivity
+    OriginalSensitivity = UserInputService.MouseDeltaSensitivity
+
+    -- ...
+end
+
+-- ...
+
 
 	ServiceConnections.RenderSteppedConnection = RunService.RenderStepped:Connect(function()
 		if Environment.FOVSettings.Enabled and Environment.Settings.Enabled then
